@@ -1,15 +1,12 @@
 #!/bin/sh
 
-# Function to generate a random string
 random() {
   tr </dev/urandom -dc A-Za-z0-9 | head -c5
   echo
 }
 
-# Array of characters for IP generation
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
 
-# Function to generate a random IPv6 address segment
 gen64() {
   ip64() {
     echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -17,7 +14,6 @@ gen64() {
   echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 
-# Function to install 3proxy
 install_3proxy() {
     echo "Installing 3proxy..."
     URL="https://raw.githubusercontent.com/quayvlog/quayvlog/main/3proxy-3proxy-0.8.6.tar.gz"
@@ -32,7 +28,6 @@ install_3proxy() {
     cd - || exit
 }
 
-# Function to generate 3proxy configuration
 gen_3proxy() {
     cat <<EOF
 daemon
@@ -53,14 +48,12 @@ $(awk -F "/" '{print "auth strong\n" \
 EOF
 }
 
-# Function to generate proxy file for users
 gen_proxy_file_for_user() {
     cat >proxy.txt <<EOF
 $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
 }
 
-# Function to upload the proxy file
 upload_proxy() {
     local PASS=$(random)
     zip --password $PASS proxy.zip proxy.txt || { echo "Failed to create ZIP"; exit 1; }
@@ -71,28 +64,24 @@ upload_proxy() {
     echo "Password: ${PASS}"
 }
 
-# Function to generate user data
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
         echo "usr$(random)/pass$(random)/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
-# Function to generate iptables rules
 gen_iptables() {
     cat <<EOF
 $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 " -m state --state NEW -j ACCEPT"}' ${WORKDATA})
 EOF
 }
 
-# Function to generate ifconfig commands
 gen_ifconfig() {
     cat <<EOF
 $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 
-# Main script execution
 echo "Installing applications..."
 yum -y install gcc net-tools bsdtar zip >/dev/null || { echo "Failed to install packages"; exit 1; }
 
